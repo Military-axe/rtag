@@ -1,8 +1,8 @@
+use futures::stream::TryStreamExt;
 use log::{error, info};
 use mongodb::bson::{doc, Document};
 use mongodb::{options::ClientOptions, options::UpdateOptions, Client, Collection, Database};
 use std::collections::HashMap;
-use futures::stream::TryStreamExt;
 
 pub struct Db {
     pub client: Client,
@@ -17,20 +17,20 @@ impl Db {
         let mut client_options = ClientOptions::parse(addr).await?;
         client_options.app_name = Some(app_name);
         let client = Client::with_options(client_options)?;
-    
+
         // 获取要创建的数据库和集合名称
         // TODO: 后期可以修改成toml文件读取
         let database_name = "rtag";
         let collection_name = "tags";
-    
+
         // 创建数据库
         let database = client.database(database_name);
-    
+
         // 创建集合（如果不存在）
         database.create_collection(collection_name, None).await?;
-    
+
         info!("Database and collection created successfully.");
-    
+
         Ok(())
     }
 
@@ -85,17 +85,17 @@ impl Db {
     /// TODO: 优化最后的打印部分
     pub async fn search_tag(&self, tags: &Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
         let mut hashmap: HashMap<String, usize> = HashMap::new();
-    
+
         for tag in tags {
             let query = doc! {"tag": tag};
             let result = self.collect.find_one(query, None).await?;
-    
+
             if let Some(document) = result {
                 let value_array = match document.get_array("value") {
                     Ok(array) => array,
                     Err(_) => continue, // 忽略获取不到数组的情况，继续下一个tag
                 };
-    
+
                 for ele in value_array.iter() {
                     let key = ele.to_string();
                     let count = hashmap.entry(key).or_insert(0);
@@ -103,12 +103,12 @@ impl Db {
                 }
             }
         }
-    
+
         // 打印结果
         for (ele, count) in hashmap.iter() {
             println!("Value: {}, Count: {}", ele, count);
         }
-    
+
         Ok(())
     }
 

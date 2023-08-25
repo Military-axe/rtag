@@ -1,8 +1,8 @@
-pub mod data;
 pub mod cli;
+pub mod data;
 
-use data::Db;
 use cli::{parse_cli, Opt};
+use data::Db;
 use log::info;
 
 #[allow(dead_code)]
@@ -15,7 +15,7 @@ async fn test_search_tags() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn match_func(db: Db,opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
+async fn match_func(db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
     if !opt.tag.is_empty() {
         if let Some(value) = opt.value {
             // 添加tag对应的值
@@ -26,7 +26,7 @@ async fn match_func(db: Db,opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
             db.search_tag(&opt.tag).await?;
         }
 
-        return Ok(())
+        return Ok(());
     }
 
     if let Some(value) = opt.value {
@@ -43,6 +43,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_con = Db::new(addr, app_name).await.unwrap();
     let opt = parse_cli();
     match_func(db_con, opt).await?;
-    
+
     Ok(())
 }
