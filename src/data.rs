@@ -65,6 +65,7 @@ impl Db {
         Ok(data_base)
     }
 
+    /// find_tags是查询数据库有多少个tag，返回一个Vec<String>记录所有的tag
     pub async fn find_tags(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let filter = doc! { "tag": { "$exists": true } };
         let mut cursor = self.collect.find(filter, None).await?;
@@ -81,6 +82,7 @@ impl Db {
     }
 
     /// 搜索多个tag都有的数据
+    /// TODO: 优化最后的打印部分
     pub async fn search_tag(&self, tags: &Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
         let mut hashmap: HashMap<String, usize> = HashMap::new();
     
@@ -129,6 +131,13 @@ impl Db {
             self.collect.update_one(query, update_doc, options).await?;
         }
 
+        Ok(())
+    }
+
+    pub async fn add_tag(&self, tag: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let document = doc! {"tag": tag, "len": 0, "value": []};
+        self.collect.insert_one(document, None).await?;
+        info!("insert new tag: {}", tag);
         Ok(())
     }
 }
