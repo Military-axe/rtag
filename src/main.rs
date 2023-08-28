@@ -15,11 +15,13 @@ async fn test_search_tags() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn match_func(db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
+/// match_func是根据命令行参数，调用不同功能的接口位置
+/// TODO: 继续开发
+async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
     if !opt.tag.is_empty() {
         if let Some(value) = opt.value {
             // 添加tag对应的值
-            db.add_value_in_tags(&opt.tag, &value).await?;
+            db.update_tag(&opt.tag, &value).await?;
             info!("Successfully added field");
         } else {
             // 搜索tags对应的值
@@ -40,9 +42,10 @@ async fn match_func(db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> 
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "mongodb://localhost:27017";
     let app_name = "rtag".to_string();
-    let db_con = Db::new(addr, app_name).await.unwrap();
-    let opt = parse_cli();
-    match_func(db_con, opt).await?;
+    let mut db_con = Db::new(addr, app_name).await.unwrap();
+    // let opt = parse_cli();
+    // match_func(db_con, opt).await?;
+    db_con.update_tag(&vec!["123".to_string()], "xxx").await?;
 
     Ok(())
 }

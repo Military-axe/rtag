@@ -3,11 +3,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rtag", about = "An example of StructOpt usage.")]
 pub struct Opt {
-    /// Text input
+    /// 目标tag
     #[structopt(short = "t", long = "tag")]
     pub tag: Vec<String>,
 
-    /// File input
+    /// 目标值
     #[structopt(short = "v", long = "value")]
     pub value: Option<String>,
 }

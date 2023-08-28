@@ -7,7 +7,9 @@ use std::collections::HashMap;
 pub struct Db {
     pub client: Client,
     pub db: Database,
-    pub collect: Collection<Document>,
+    pub tags_collect: Collection<Document>,
+    pub values_collect: Collection<Document>,
+    pub tags: Vec<String>
 }
 
 impl Db {
@@ -22,12 +24,14 @@ impl Db {
         // TODO: 后期可以修改成toml文件读取
         let database_name = "rtag";
         let collection_name = "tags";
+        let collection_name2 = "values";
 
         // 创建数据库
         let database = client.database(database_name);
 
         // 创建集合（如果不存在）
         database.create_collection(collection_name, None).await?;
+        database.create_collection(collection_name2, None).await?;
 
         info!("Database and collection created successfully.");
 
@@ -55,20 +59,22 @@ impl Db {
         // 连接数据库，数据库名这是暂定是rtag_data.集合名为test
         // TODO: 数据库名，集合名传参
         let db = c.database("rtag_data");
-        let collection: mongodb::Collection<mongodb::bson::Document> = db.collection("test");
-
+        let tags_collection: mongodb::Collection<mongodb::bson::Document> = db.collection("tags");
+        let values_collection = db.collection("values");
         let data_base = Db {
             client: c,
             db,
-            collect: collection,
+            tags: Db::find_tags(&tags_collection).await.unwrap(),
+            tags_collect: tags_collection,
+            values_collect: values_collection,
         };
         Ok(data_base)
     }
 
     /// find_tags是查询数据库有多少个tag，返回一个Vec<String>记录所有的tag
-    pub async fn find_tags(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    pub async fn find_tags(collect: &Collection<Document>) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let filter = doc! { "tag": { "$exists": true } };
-        let mut cursor = self.collect.find(filter, None).await?;
+        let mut cursor =  collect.find(filter, None).await?;
         let mut tags: Vec<String> = Vec::new();
 
         while let Some(document) = cursor.try_next().await? {
@@ -88,7 +94,7 @@ impl Db {
 
         for tag in tags {
             let query = doc! {"tag": tag};
-            let result = self.collect.find_one(query, None).await?;
+            let result = self.tags_collect.find_one(query, None).await?;
 
             if let Some(document) = result {
                 let value_array = match document.get_array("value") {
@@ -113,7 +119,7 @@ impl Db {
     }
 
     /// 向数据库插入值，当这个tag中已经有这个值的时候就不会重复添加
-    pub async fn add_value_in_tags(
+    async fn add_value_in_tags(
         &self,
         tags: &Vec<String>,
         val: &str,
@@ -128,16 +134,59 @@ impl Db {
 
             let options = UpdateOptions::builder().upsert(false).build();
             let query = doc! {"tag": tag};
-            self.collect.update_one(query, update_doc, options).await?;
+            self.tags_collect.update_one(query, update_doc, options).await?;
         }
 
         Ok(())
     }
 
-    pub async fn add_tag(&self, tag: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let document = doc! {"tag": tag, "len": 0, "value": []};
-        self.collect.insert_one(document, None).await?;
+    /// add_tag是数据库中tags集合中创建一个新的tag文档
+    async fn add_tag(&self, tag: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let document = doc! {"tag": tag, "value": []};
+        self.tags_collect.insert_one(document, None).await?;
         info!("insert new tag: {}", tag);
         Ok(())
     }
+
+    /// add_value是在数据库中values集合中，创建一个新的values文档，并插入
+    /// val值和tags的值
+    async fn add_value(&self, value: &str, tags: &Vec<String>,) -> Result<(), Box<dyn std::error::Error>> {
+        let document = doc! {"value": value, "tags": tags};
+        self.tags_collect.insert_one(document, None).await?;
+        info!("insert new value: {}", value);
+        Ok(())
+    }
+
+    /// update_tag是更新tags集合中的值，当插入新的值或者新的tag时，都可以调用此函数
+    /// 此函数会创建新的tag或者将值插入已有tag中
+    pub async fn update_tag(
+        &mut self,
+        tags: &Vec<String>,
+        val: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        for tag in tags{
+            if !self.tags.contains(tag){
+                self.add_tag(tag).await?;
+                self.tags.push(tag.clone());
+            }
+        }
+
+        // 没有对比values文档，直接创建新的values文档，默认
+        // 插入新的值就是之前没有过的值
+        self.add_value(val, tags).await?;
+
+        self.add_value_in_tags(tags, val).await?;
+
+        Ok(())
+    }
+
+    /// find_value查找values集合中
+    /// TODO: 继续开发
+    pub async fn find_value(&self, val: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let filter = doc! { "tag": { "$exists": true } };
+        let mut cursor =  self.values_collect.find(filter, None).await?;
+
+        Ok(())
+    }
+
 }
