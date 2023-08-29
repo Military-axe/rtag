@@ -6,8 +6,6 @@
 
 ## 数据库
 
-以tag为主来存储，每个tag中有一个列表，列表中是对应所有这个tag的值
-
 ### 集合tags
 
 存在多个文档，一个文档代表一个tag，每个文档中的值如下
@@ -51,3 +49,27 @@
 value + tag : 插入值到对应tag中
 value: 所有包含字符串的值以及对应的tag
 tag: 展示有一个tag或者多个tag的值
+
+### 添加值和对应的tag
+
+将`babyre`打上`rc4`,`base64`两个不同的tag
+
+```sh
+rtag -t rc4 base64 -v babyre
+```
+
+### 查看tag下所有的值
+
+查看有`rc4`,`base64`两个tag的值
+
+```sh
+rtag -t rc4 base64
+```
+
+### 模糊搜索值以及对应tag
+
+搜索包含`re`两个字符的值以及对应的tag
+
+```sh
+rtag -v re
+```

@@ -1,16 +1,16 @@
+use colored::Colorize;
 use futures::stream::TryStreamExt;
 use log::{error, info};
 use mongodb::bson::{doc, Document};
 use mongodb::{options::ClientOptions, options::UpdateOptions, Client, Collection, Database};
 use std::collections::HashMap;
-use colored::Colorize;
 
 pub struct Db {
     pub client: Client,
     pub db: Database,
     pub tags_collect: Collection<Document>,
     pub values_collect: Collection<Document>,
-    pub tags: Vec<String>
+    pub tags: Vec<String>,
 }
 
 impl Db {
@@ -73,9 +73,11 @@ impl Db {
     }
 
     /// find_tags是查询数据库有多少个tag，返回一个Vec<String>记录所有的tag
-    pub async fn find_tags(collect: &Collection<Document>) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    pub async fn find_tags(
+        collect: &Collection<Document>,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let filter = doc! { "tag": { "$exists": true } };
-        let mut cursor =  collect.find(filter, None).await?;
+        let mut cursor = collect.find(filter, None).await?;
         let mut tags: Vec<String> = Vec::new();
 
         while let Some(document) = cursor.try_next().await? {
@@ -136,7 +138,9 @@ impl Db {
 
             let options = UpdateOptions::builder().upsert(false).build();
             let query = doc! {"tag": tag};
-            self.tags_collect.update_one(query, update_doc, options).await?;
+            self.tags_collect
+                .update_one(query, update_doc, options)
+                .await?;
         }
 
         info!("add tags: {:?} and value: {} success", tags, val);
@@ -154,7 +158,11 @@ impl Db {
 
     /// add_value是在数据库中values集合中，创建一个新的values文档，并插入
     /// val值和tags的值
-    async fn add_value(&self, value: &str, tags: &Vec<String>,) -> Result<(), Box<dyn std::error::Error>> {
+    async fn add_value(
+        &self,
+        value: &str,
+        tags: &Vec<String>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let document = doc! {"value": value, "tags": tags};
         self.values_collect.insert_one(document, None).await?;
         info!("insert new value: {}", value);
@@ -169,8 +177,8 @@ impl Db {
         tags: &Vec<String>,
         val: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        for tag in tags{
-            if !self.tags.contains(tag){
+        for tag in tags {
+            if !self.tags.contains(tag) {
                 self.add_tag(tag).await?;
                 self.tags.push(tag.clone());
             }
@@ -188,7 +196,7 @@ impl Db {
     /// find_value查找values集合中,大小写不敏感
     pub async fn find_value(&self, val: &str) -> Result<(), Box<dyn std::error::Error>> {
         let filter = doc! { "value": { "$exists": true } };
-        let mut cursor =  self.values_collect.find(filter, None).await?;
+        let mut cursor = self.values_collect.find(filter, None).await?;
 
         while let Some(document) = cursor.try_next().await? {
             // 处理查询结果
@@ -198,10 +206,15 @@ impl Db {
 
                 if let Some(begin) = low_a.find(&low_b) {
                     let end = begin + low_b.len();
-                    println!("value: {}{}{}", &low_a[0..begin], low_b.red(), &low_a[end..]);
+                    println!(
+                        "value: {}{}{}",
+                        &low_a[0..begin],
+                        low_b.red(),
+                        &low_a[end..]
+                    );
                     print!("tags: ");
                     let tags = document.get_array("tags").ok().unwrap();
-                    for tag in tags{
+                    for tag in tags {
                         print!("{}, ", tag.to_string().replace("\"", "").green());
                     }
                     println!();
@@ -211,5 +224,4 @@ impl Db {
 
         Ok(())
     }
-
 }

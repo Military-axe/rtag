@@ -4,6 +4,7 @@ pub mod data;
 use cli::{parse_cli, Opt};
 use data::Db;
 use log::info;
+#[allow(unused_imports)]
 use std::env::set_var;
 
 #[allow(dead_code)]
@@ -42,7 +43,7 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    set_var("RUST_LOG", "info");
+    // set_var("RUST_LOG", "info");
     env_logger::init();
     info!("start");
     let addr = "mongodb://localhost:27017";
