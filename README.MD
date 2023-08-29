@@ -18,7 +18,6 @@
     "$oid": "64e714b28054de22d73432e0"
   },
   "tag": "test", // tag名称
-  "len": 2,      // 此tag存有的值数量
   "value": [     // 包含此tag的值
     "text0",
     "text1"

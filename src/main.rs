@@ -4,6 +4,7 @@ pub mod data;
 use cli::{parse_cli, Opt};
 use data::Db;
 use log::info;
+use std::env::set_var;
 
 #[allow(dead_code)]
 async fn test_search_tags() -> Result<(), Box<dyn std::error::Error>> {
@@ -15,8 +16,8 @@ async fn test_search_tags() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[allow(dead_code)]
 /// match_func是根据命令行参数，调用不同功能的接口位置
-/// TODO: 继续开发
 async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
     if !opt.tag.is_empty() {
         if let Some(value) = opt.value {
@@ -31,8 +32,9 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
         return Ok(());
     }
 
+    // 查询所有存在此字符串的值，以及对应的tag
     if let Some(value) = opt.value {
-        // TODO: 查询所有存在此字符串的值，以及对应的tag
+        db.find_value(&value).await?
     }
 
     Ok(())
@@ -40,12 +42,14 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    set_var("RUST_LOG", "info");
+    env_logger::init();
+    info!("start");
     let addr = "mongodb://localhost:27017";
     let app_name = "rtag".to_string();
-    let mut db_con = Db::new(addr, app_name).await.unwrap();
-    // let opt = parse_cli();
-    // match_func(db_con, opt).await?;
-    db_con.update_tag(&vec!["123".to_string()], "xxx").await?;
-
+    let db_con = Db::new(addr, app_name).await.unwrap();
+    info!("[+] connect database");
+    let opt = parse_cli();
+    match_func(db_con, opt).await?;
     Ok(())
 }
