@@ -73,3 +73,31 @@ rtag -t rc4 base64
 ```sh
 rtag -v re
 ```
+
+## 配置
+
+配置数据库，后面考虑加入更多数据配置相关的，配置文件采用toml格式。
+
+配置文件的路径通过`RTAG`环境变量来配置，值是路径，文件名是`rtag.toml`。
+
+```sh
+$RTAG="C:/Documents/config"
+```
+
++ mongodb_url: mongodb_url地址
++ database_name: 数据库名，默认是rtag
++ tags_collect: tags的集合名，默认是tags
++ values_collect：values的集合名，默认是values
+
+```toml
+[database]
+
+mongodb_url = "mongodb://localhost:27017"
+database_name = "rtag"
+tags_collect = "tags"
+values_collect = "values"
+```
+
+## TODO
+
+ - [ ] 导入导出tag信息功能

@@ -14,39 +14,40 @@ pub struct Db {
 }
 
 impl Db {
-    // init函数创建数据库与集合
-    pub async fn init(addr: &str, app_name: String) -> Result<(), Box<dyn std::error::Error>> {
-        // 创建 MongoDB 的客户端连接
-        let mut client_options = ClientOptions::parse(addr).await?;
-        client_options.app_name = Some(app_name);
-        let client = Client::with_options(client_options)?;
+    // /// init函数创建数据库与集合
+    // /// 创建rtag数据库，同时创建tags集合和values集合
+    // pub async fn init(addr: &str, app_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    //     // 创建 MongoDB 的客户端连接
+    //     let mut client_options = ClientOptions::parse(addr).await?;
+    //     client_options.app_name = Some(app_name.to_string());
+    //     let client = Client::with_options(client_options)?;
 
-        // 获取要创建的数据库和集合名称
-        // TODO: 后期可以修改成toml文件读取
-        let database_name = "rtag";
-        let collection_name = "tags";
-        let collection_name2 = "values";
+    //     // 获取要创建的数据库和集合名称
+    //     // TODO: 后期可以修改成toml文件读取
+    //     let database_name = "rtag";
+    //     let collection_name = "tags";
+    //     let collection_name2 = "values";
 
-        // 创建数据库
-        let database = client.database(database_name);
+    //     // 创建数据库
+    //     let database = client.database(database_name);
 
-        // 创建集合（如果不存在）
-        database.create_collection(collection_name, None).await?;
-        database.create_collection(collection_name2, None).await?;
+    //     // 创建集合（如果不存在）
+    //     database.create_collection(collection_name, None).await?;
+    //     database.create_collection(collection_name2, None).await?;
 
-        info!("Database and collection created successfully.");
+    //     info!("Database and collection created successfully.");
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     /// new函数连接mongodb数据库并返回Result<DataBase, Box<dyn std::error::Error>>
     /// DataBase中存储了client是和数据库的连接，通过此连接来读写数据库.
     /// 函数有两个参数，addr和app_name
     /// addr: &str;是连接数据库的uri地址，默认是"mongodb://localhost:27017"
     /// app_name: String;是数据库日志记录过程中的一个表示，方便调试
-    pub async fn new(addr: &str, app_name: String) -> Result<Db, Box<dyn std::error::Error>> {
+    pub async fn new(addr: &str, app_name: &str) -> Result<Db, Box<dyn std::error::Error>> {
         let mut client_options = ClientOptions::parse(addr).await?;
-        client_options.app_name = Some(app_name);
+        client_options.app_name = Some(app_name.to_string());
 
         // 建立与MongoDB的连接
         let c = match Client::with_options(client_options) {

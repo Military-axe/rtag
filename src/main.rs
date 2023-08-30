@@ -1,21 +1,14 @@
 pub mod cli;
 pub mod data;
+pub mod rtag_config;
 
 use cli::{parse_cli, Opt};
 use data::Db;
-use log::info;
+use log::{error, info};
+use rtag_config::read_config;
 #[allow(unused_imports)]
-use std::env::set_var;
-
-#[allow(dead_code)]
-async fn test_search_tags() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "mongodb://localhost:27017";
-    let app_name = "rtag".to_string();
-    let db_con = Db::new(addr, app_name).await.unwrap();
-    db_con.search_tag(&vec!["test".to_string()]).await?;
-
-    Ok(())
-}
+use std::env::{set_var, var};
+use std::process::exit;
 
 #[allow(dead_code)]
 /// match_func是根据命令行参数，调用不同功能的接口位置
@@ -43,12 +36,25 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // set_var("RUST_LOG", "info");
+    set_var("RUST_LOG", "info");
+    set_var("RTAG", "D:/Documents/git_down/rtag_data/config");
     env_logger::init();
     info!("start");
-    let addr = "mongodb://localhost:27017";
-    let app_name = "rtag".to_string();
-    let db_con = Db::new(addr, app_name).await.unwrap();
+
+    // 获取RTAG环境变量
+    let config_file_path = match var("RTAG") {
+        Ok(x) => x,
+        Err(_) => {
+            error!("[!] \"RATG\" environment variable not found");
+            exit(0);
+        }
+    };
+    // 打开RTAG变量中记录的配置文件路径
+    let config = read_config(&(config_file_path + "/rtag.toml"));
+    let db_con = Db::new(&config.mongodb_url, &config.database_name)
+        .await
+        .unwrap();
+
     info!("[+] connect database");
     let opt = parse_cli();
     match_func(db_con, opt).await?;
