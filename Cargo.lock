@@ -1115,6 +1115,7 @@ dependencies = [
  "log",
  "mongodb",
  "serde",
+ "serde_json",
  "structopt",
  "tokio",
  "toml",

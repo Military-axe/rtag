@@ -10,7 +10,6 @@ use rtag_config::read_config;
 use std::env::{set_var, var};
 use std::process::exit;
 
-#[allow(dead_code)]
 /// match_func是根据命令行参数，调用不同功能的接口位置
 async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
     if !opt.tag.is_empty() {
@@ -28,7 +27,20 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
 
     // 查询所有存在此字符串的值，以及对应的tag
     if let Some(value) = opt.value {
-        db.find_value(&value).await?
+        db.find_value(&value).await?;
+        return Ok(())
+    }
+
+    // 导出
+    if let Some(export_path) = opt.export {
+        db.export(&export_path).await?;
+        return Ok(());
+    }
+
+    // 导入
+    if let Some(import_path) = opt.import {
+        db.import(&import_path).await?;
+        return Ok(());
     }
 
     Ok(())
@@ -36,8 +48,8 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    set_var("RUST_LOG", "info");
-    set_var("RTAG", "D:/Documents/git_down/rtag_data/config");
+    // set_var("RUST_LOG", "info");
+    // set_var("RTAG", "D:/Documents/git_down/rtag_data/config");
     env_logger::init();
     info!("start");
 
@@ -51,9 +63,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     // 打开RTAG变量中记录的配置文件路径
     let config = read_config(&(config_file_path + "/rtag.toml"));
-    let db_con = Db::new(&config.mongodb_url, &config.database_name)
-        .await
-        .unwrap();
+    let db_con = Db::new(
+        &config.mongodb_url,
+        &config.database_name,
+        &config.tags_collect,
+        &config.values_collect,
+    )
+    .await
+    .unwrap();
 
     info!("[+] connect database");
     let opt = parse_cli();
