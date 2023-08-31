@@ -28,7 +28,7 @@ async fn match_func(mut db: Db, opt: Opt) -> Result<(), Box<dyn std::error::Erro
     // 查询所有存在此字符串的值，以及对应的tag
     if let Some(value) = opt.value {
         db.find_value(&value).await?;
-        return Ok(())
+        return Ok(());
     }
 
     // 导出

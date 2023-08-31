@@ -24,31 +24,6 @@ struct Value {
 }
 
 impl Db {
-    // /// init函数创建数据库与集合
-    // /// 创建rtag数据库，同时创建tags集合和values集合
-    // pub async fn init(addr: &str, app_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-    //     // 创建 MongoDB 的客户端连接
-    //     let mut client_options = ClientOptions::parse(addr).await?;
-    //     client_options.app_name = Some(app_name.to_string());
-    //     let client = Client::with_options(client_options)?;
-
-    //     // 获取要创建的数据库和集合名称
-    //     // TODO: 后期可以修改成toml文件读取
-    //     let database_name = "rtag";
-    //     let collection_name = "tags";
-    //     let collection_name2 = "values";
-
-    //     // 创建数据库
-    //     let database = client.database(database_name);
-
-    //     // 创建集合（如果不存在）
-    //     database.create_collection(collection_name, None).await?;
-    //     database.create_collection(collection_name2, None).await?;
-
-    //     info!("Database and collection created successfully.");
-
-    //     Ok(())
-    // }
 
     /// new函数连接mongodb数据库并返回Result<DataBase, Box<dyn std::error::Error>>
     /// DataBase中存储了client是和数据库的连接，通过此连接来读写数据库.
@@ -74,7 +49,6 @@ impl Db {
         };
 
         // 连接数据库，数据库名这是暂定是rtag
-        // TODO: 数据库名，集合名传参
         let db = c.database(app_name);
         let tags_collection: mongodb::Collection<mongodb::bson::Document> = db.collection(tags);
         let values_collection = db.collection(values);
@@ -262,7 +236,7 @@ impl Db {
             .update_many(filter, update, update_options)
             .await
             .unwrap();
-    
+
         // 删除空的tag文档
         for tag in tags {
             let filter = doc! {
@@ -271,10 +245,8 @@ impl Db {
                     "$eq": Bson::Array(Vec::new())
                 }
             };
-        
-            self.tags_collect
-                .delete_one(filter, None)
-                .await?;
+
+            self.tags_collect.delete_one(filter, None).await?;
         }
 
         info!("[+] delete the diff tags");

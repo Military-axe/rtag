@@ -4,6 +4,16 @@
 
 使用mongodb数据库存储数据，rust编程
 
+## 安装
+
+编译项目
+
+```
+cargo build
+```
+
+在`target`目录下`debug`下可以找到`rtag_data.exe`
+
 ## 数据库
 
 ### 集合tags
@@ -100,4 +110,4 @@ values_collect = "values"
 
 ## TODO
 
- - [ ] 导入导出tag信息功能
+ - [x] 导入导出tag信息功能
